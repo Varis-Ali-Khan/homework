@@ -12,65 +12,56 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ProviderCard from '../components/ProviderCard';
-import { fetchProvidersRequest } from '../features/providers/providerSlice';
-import { logout } from '../features/auth/authSlice';
+import { fetchProvidersRequest } from '../redux/providers/providerSlice';
+import { useTheme } from '../context/ThemeContext';
 
 export default function HomeScreen({ navigation }) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch]       = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const dispatch = useDispatch();
+  const dispatch                  = useDispatch();
   const { list: providers, loading } = useSelector((state) => state.providers);
-  const insets = useSafeAreaInsets();
+  const insets                    = useSafeAreaInsets();
+  const { colors }                = useTheme();
 
   useEffect(() => {
     dispatch(fetchProvidersRequest({}));
   }, [dispatch]);
 
-  // Stop refreshing spinner when loading finishes
   useEffect(() => {
     if (!loading) setRefreshing(false);
   }, [loading]);
 
-  const handleSearch = () => dispatch(fetchProvidersRequest({ search: search.trim() }));
-
+  const handleSearch  = () => dispatch(fetchProvidersRequest({ search: search.trim() }));
   const handleRefresh = () => {
     setRefreshing(true);
     dispatch(fetchProvidersRequest({ search: search.trim() }));
   };
 
-  // Set logout button in header
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity onPress={() => dispatch(logout())} style={{ marginRight: 4 }}>
-          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '500' }}>Logout</Text>
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, dispatch]);
-
-  if (loading) {
+  if (loading && !refreshing) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563EB" />
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+    <View style={[styles.container, { backgroundColor: colors.bg, paddingBottom: insets.bottom }]}>
       {/* Search bar */}
-      <View style={styles.searchRow}>
+      <View style={[styles.searchRow, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { backgroundColor: colors.surface2, color: colors.text }]}
           placeholder="Search by service (plumber, electrician...)"
           value={search}
           onChangeText={setSearch}
           onSubmitEditing={handleSearch}
           returnKeyType="search"
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={colors.placeholder}
         />
-        <TouchableOpacity style={styles.searchBtn} onPress={handleSearch}>
+        <TouchableOpacity
+          style={[styles.searchBtn, { backgroundColor: colors.accent }]}
+          onPress={handleSearch}
+        >
           <Text style={styles.searchBtnText}>Search</Text>
         </TouchableOpacity>
       </View>
@@ -89,15 +80,15 @@ export default function HomeScreen({ navigation }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#2563EB']}
-            tintColor="#2563EB"
+            colors={[colors.accent]}
+            tintColor={colors.accent}
           />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>🔍</Text>
-            <Text style={styles.emptyText}>No providers found</Text>
-            <Text style={styles.emptySubText}>Try a different search term</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No providers found</Text>
+            <Text style={[styles.emptySubText, { color: colors.textMuted }]}>Try a different search term</Text>
           </View>
         }
         showsVerticalScrollIndicator={false}
@@ -107,36 +98,31 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  container:    { flex: 1 },
+  center:       { flex: 1, justifyContent: 'center', alignItems: 'center' },
   searchRow: {
-    flexDirection: 'row',
+    flexDirection:     'row',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
+    paddingVertical:   12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    gap: 8,
+    gap:               8,
   },
   searchInput: {
-    flex: 1,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 10,
+    flex:              1,
+    borderRadius:      10,
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#1E293B',
+    paddingVertical:   10,
+    fontSize:          14,
   },
   searchBtn: {
-    backgroundColor: '#2563EB',
     paddingHorizontal: 16,
-    borderRadius: 10,
-    justifyContent: 'center',
+    borderRadius:      10,
+    justifyContent:    'center',
   },
   searchBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
-  list: { padding: 16, paddingBottom: 24 },
-  empty: { alignItems: 'center', paddingTop: 80 },
-  emptyIcon: { fontSize: 40, marginBottom: 12 },
-  emptyText: { color: '#475569', fontSize: 17, fontWeight: '600', marginBottom: 4 },
-  emptySubText: { color: '#94A3B8', fontSize: 14 },
+  list:          { padding: 16, paddingBottom: 24 },
+  empty:         { alignItems: 'center', paddingTop: 80 },
+  emptyIcon:     { fontSize: 40, marginBottom: 12 },
+  emptyText:     { fontSize: 17, fontWeight: '600', marginBottom: 4 },
+  emptySubText:  { fontSize: 14 },
 });
